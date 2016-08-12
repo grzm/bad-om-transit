@@ -63,15 +63,15 @@ which is encoded by the interceptor. The edn value is:
 
 1. Start Figwheel (which compiles the client code).
 
-         rlwrap lein run -m clojure.main script/figwheel.clj
+        rlwrap lein run -m clojure.main script/figwheel.clj
 
 2. Start a server repl (using `lein repl` or [CIDER][cider]):
 
-         lein repl
+        lein repl
 
 3. Start the server via the repl
 
-         (go)
+        (go)
 
 4. Confirm server requests properly Transit encode the `#om/id`
    tagged literal.
@@ -80,40 +80,40 @@ which is encoded by the interceptor. The edn value is:
    The `/om-str` endpoint encodes the EDN directly in the handler, and its
    interceptor chain *does not* include the `om-transit-json-body` interceptor.
 
-         curl localhost:8083/om-str
-         ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        curl localhost:8083/om-str
+        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
    The `/om-bw` endpoint passes a function that accepts the output stream to which
    it will write the Transit-encoded body. This also does *not* include the
    `om-transit-json-body` interceptor in the interceptor chain.
 
-         curl localhost:8083/om-bw
-         ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        curl localhost:8083/om-bw
+        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
    The `/om-interceptor` endpoint passes the edn as the body and includes the
    `om-transit-json-body` interceptor in the interceptor chain.
 
-         curl localhost:8083/om-interceptor
-         ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        curl localhost:8083/om-interceptor
+        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
     Note all three encoded the `#om/id` tagged literal correctly.
 
 
 5. Reload the server via the repl
 
-         (reset)
-         ;; :reloading (om.util om.tempid om.transit bot.service bot.service-test cljs.stacktrace om.next.impl.parser bot.server user om.next.protocols)
+        (reset)
+        ;; :reloading (om.util om.tempid om.transit bot.service bot.service-test cljs.stacktrace om.next.impl.parser bot.server user om.next.protocols)
 
 6. Confirm `#om/id` tagged literal is no longer being properly encoded.
 
-         curl localhost:8083/om-str
-         ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        curl localhost:8083/om-str
+        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
-         curl localhost:8083/om-bw
-         ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        curl localhost:8083/om-bw
+        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
-         curl localhost:8083/om-interceptor
-         ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        curl localhost:8083/om-interceptor
+        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
     All three no longer encode the `#om/id` tagged literal correctly.
 
