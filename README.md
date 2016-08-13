@@ -3,6 +3,15 @@
 Test case for Om-Transit encoding issue with Reloaded Pedestal-backed Om Next
 stack.
 
+**FIXED**
+
+With some help from [Robert Stuttaford][robert-stuttaford] in the #clojure Slack
+channel, I was able to [update the `reset` function][fix] in my Reloaded
+workflow to prevent files copied by Figwheel from being loaded by the server
+backend.
+
+[robert-stuttaford]: http://www.stuttaford.me
+
 ### Goal
 
 Create an [Om Next][om-next] application with a [Pedestal][pedestal] remote.
@@ -54,10 +63,12 @@ literals are no longer transit encoded correctly.
 To test the Transit encoding, the server serves a hard-coded edn value body
 which is encoded by the interceptor. The edn value is:
 
-    (def edn-body
-      `{todo/new-item
-        {:tempids
-         {~(tempid/tempid "2e486bfc-aacb-4736-8aa2-155411274e84") 852154481843896390}}})
+```clojure
+(def edn-body
+  `{todo/new-item
+    {:tempids
+     {~(tempid/tempid "2e486bfc-aacb-4736-8aa2-155411274e84") 852154481843896390}}})
+```
 
 ### To replicate
 
@@ -117,6 +128,64 @@ which is encoded by the interceptor. The edn value is:
 
     All three no longer encode the `#om/id` tagged literal correctly.
 
+<h3 id="fix">The Fix</h3>
+
+When Figwheel compiles the front-end application, it copies required `.cljs`
+(ClojureScript) and `.cljc` (multi-target files) into the `resource` directory.
+By default,  `clojure.tools.namespace.repl/refresh` used in the Reloaded
+workflow to reload code looks for any Clojure files (`.clj` and `.cljc`) in the
+classpath, which includes the `resource` directory. So on `reset`, any `.cljc`
+files in `resource` were included that were *not* included in the original
+compilation. And somewhere backend code was getting stomped on by the code in
+`resource`.
+
+Here's a list of those files:
+
+    > find ./resources/public/js -name "*.cljc"
+    ./resources/public/js/cljs/stacktrace.cljc
+    ./resources/public/js/om/next/impl/parser.cljc
+    ./resources/public/js/om/next/protocols.cljc
+    ./resources/public/js/om/tempid.cljc
+    ./resources/public/js/om/transit.cljc
+    ./resources/public/js/om/util.cljc
+
+The culprit is `om/transit.cljc`. I ran Figwheel, deleted `om/transit.cljc`,
+and then ran `(reset)` and confirmed that the code worked as expected. Deleting
+another file, such as `om/tempid.cljc`, did not fix the bug. However,
+deleting files from `resources` isn't a very convenient or robust solution.
+
+`clojure.tools.namespace.repl` includes a `set-refresh-dirs` function that lets
+you to specify where `refresh` will look. I updated my Reloaded code to set this
+to the classpath (the default) *excluding* the `resource` directory.
+
+```clojure
+(ns user
+  (:require ; ...
+            [com.stuartsierra.component :as component]
+            [clojure.tools.namespace.repl :as repl]
+            [clojure.java.classpath :as cp]
+            [clojure.java.io :refer [resource]])
+  (:import [java.io File]))
+; ...
+(defn refresh-dirs
+  "Remove `resource` path from refresh-dirs"
+  ([] (refresh-dirs repl/refresh-dirs))
+  ([dirs]
+   (let [resources-path (-> "public" resource .getPath File. .getParent)
+         exclusions #{resources-path}
+         ds (or (seq dirs) (cp/classpath-directories))]
+     (remove #(contains? exclusions (.getPath %)) ds))))
+
+(defn reset
+  "Destroys, initializes, and starts the current development system"
+  []
+  (stop)
+   (apply repl/set-refresh-dirs (refresh-dirs))
+  (repl/refresh :after 'user/go))
+```
+
+Problem solved.
+
 ### Notes
 
  1. Starting Figwheel/compiling the client code is necessary for issue to occur,
@@ -125,6 +194,5 @@ which is encoded by the interceptor. The edn value is:
     compiled the client code.
 
  2. The issue only occurs after reloading the server code via `(reset)`.
-
 
 [cider]: http://cider.readthedocs.io

@@ -1,10 +1,14 @@
 (ns user
   (:require [com.stuartsierra.component :as component]
             [clojure.tools.namespace.repl :as repl]
+            [clojure.java.classpath :as cp]
+            [clojure.java.io :refer [resource]]
+
             [bot.server :as server]
             [bot.service :as service]
             [figwheel-sidecar.repl-api :as ra]
-            [figwheel-sidecar.config :as fw-config]))
+            [figwheel-sidecar.config :as fw-config])
+  (:import [java.io File]))
 
 (def system nil)
 
@@ -36,10 +40,20 @@
     (do (init)
         (start))))
 
+(defn refresh-dirs
+  "Remove `resource` path from refresh-dirs"
+  ([] (refresh-dirs repl/refresh-dirs))
+  ([dirs]
+   (let [resources-path (-> "public" resource .getPath File. .getParent)
+         exclusions #{resources-path}
+         ds (or (seq dirs) (cp/classpath-directories))]
+     (remove #(contains? exclusions (.getPath %)) ds))))
+
 (defn reset
   "Destroys, initializes, and starts the current development system"
   []
   (stop)
+   (apply repl/set-refresh-dirs (refresh-dirs))
   (repl/refresh :after 'user/go))
 
 
