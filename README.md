@@ -3,9 +3,7 @@
 Test case for Om-Transit encoding issue with Reloaded Pedestal-backed Om Next
 stack.
 
-**FIXED**
-
-With some help from [Robert Stuttaford][robert-stuttaford] in the #clojure Slack
+**FIXED** With some help from [Robert Stuttaford][robert-stuttaford] in the #clojure Slack
 channel, I was able to [update the `reset` function][fix] in my Reloaded
 workflow to prevent files copied by Figwheel from being loaded by the server
 backend.
@@ -129,6 +127,17 @@ which is encoded by the interceptor. The edn value is:
 
     All three no longer encode the `#om/id` tagged literal correctly.
 
+
+### Notes
+
+ 1. Starting Figwheel/compiling the client code is necessary for issue to occur,
+    though Figwheel does not need to be running at the time requests are made
+    to the server. The repl must be started (or restarted) *after* figwheel
+    compiled the client code.
+
+ 2. The issue only occurs after reloading the server code via `(reset)`.
+
+
 <h3 id="fix">The Fix</h3>
 
 When Figwheel compiles the front-end application, it copies required `.cljs`
@@ -186,14 +195,5 @@ to the classpath (the default) *excluding* the `resource` directory.
 ```
 
 Problem solved.
-
-### Notes
-
- 1. Starting Figwheel/compiling the client code is necessary for issue to occur,
-    though Figwheel does not need to be running at the time requests are made
-    to the server. The repl must be started (or restarted) *after* figwheel
-    compiled the client code.
-
- 2. The issue only occurs after reloading the server code via `(reset)`.
 
 [cider]: http://cider.readthedocs.io
