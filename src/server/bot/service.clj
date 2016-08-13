@@ -50,7 +50,7 @@
     (.toString baos)))
 
 (def edn-body
-  `{some/new-item
+  `{todo/new-item
     {:tempids
      {~(tempid/tempid "2e486bfc-aacb-4736-8aa2-155411274e84") 852154481843896390}}})
 

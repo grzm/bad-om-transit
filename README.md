@@ -55,7 +55,7 @@ To test the Transit encoding, the server serves a hard-coded edn value body
 which is encoded by the interceptor. The edn value is:
 
     (def edn-body
-      `{some/new-item
+      `{todo/new-item
         {:tempids
          {~(tempid/tempid "2e486bfc-aacb-4736-8aa2-155411274e84") 852154481843896390}}})
 
@@ -81,20 +81,20 @@ which is encoded by the interceptor. The edn value is:
    interceptor chain *does not* include the `om-transit-json-body` interceptor.
 
         curl localhost:8083/om-str
-        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        ["^ ","~$todo/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
    The `/om-bw` endpoint passes a function that accepts the output stream to which
    it will write the Transit-encoded body. This also does *not* include the
    `om-transit-json-body` interceptor in the interceptor chain.
 
         curl localhost:8083/om-bw
-        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        ["^ ","~$todo/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
    The `/om-interceptor` endpoint passes the edn as the body and includes the
    `om-transit-json-body` interceptor in the interceptor chain.
 
         curl localhost:8083/om-interceptor
-        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        ["^ ","~$todo/new-item",["^ ","~:tempids",["~#cmap",[["~#om/id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
     Note all three encoded the `#om/id` tagged literal correctly.
 
@@ -107,13 +107,13 @@ which is encoded by the interceptor. The edn value is:
 6. Confirm `#om/id` tagged literal is no longer being properly encoded.
 
         curl localhost:8083/om-str
-        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        ["^ ","~$todo/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
         curl localhost:8083/om-bw
-        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        ["^ ","~$todo/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
         curl localhost:8083/om-interceptor
-        ["^ ","~$some/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
+        ["^ ","~$todo/new-item",["^ ","~:tempids",["~#cmap",[["^ ","~:id","2e486bfc-aacb-4736-8aa2-155411274e84"],"~i852154481843896390"]]]]
 
     All three no longer encode the `#om/id` tagged literal correctly.
 
